@@ -3,9 +3,9 @@
     <div id="checkout_wrapper" ></div>
 </div>
 <script type="text/javascript">
-var checkoutStyles = {
-<?php echo $styles; ?>
-	};
+    var checkoutStyles = {
+    <?php echo $styles; ?>
+    };
 
     function checkoutInit(url) {
         window.location = url;
@@ -13,7 +13,7 @@ var checkoutStyles = {
 
 </script>
 <div class="buttons">
-        <div class="pull-right">
-            <a onclick="checkoutInit('<?php echo $frisbee['url'] ?>');" class="btn btn-primary"><?php echo $button_confirm; ?></a>
-        </div>
+    <div class="pull-right right">
+        <a onclick="checkoutInit('<?php echo $frisbee['url'] ?>');" class="btn btn-primary button"><?php echo $button_confirm; ?></a>
+    </div>
 </div>

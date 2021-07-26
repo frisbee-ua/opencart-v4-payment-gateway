@@ -78,7 +78,17 @@ class ControllerPaymentFrisbee extends Controller
         $data['frisbee'] = $out;
         $data['styles'] = $this->config->get('frisbee_styles');
         $data['button_confirm'] = $this->language->get('button_confirm');
-        if (version_compare(VERSION, '2.1.0.2', '>')) {
+
+        if (version_compare(VERSION, '2.0.0.0', '<')) {
+            if (file_exists(DIR_TEMPLATE . $this->config->get('config_template') . '/template/payment/frisbee.tpl')) {
+                $this->template = $this->config->get('config_template') . '/template/payment/frisbee.tpl';
+            } else {
+                $this->template = 'default/template/payment/frisbee.tpl';
+            }
+            $this->data = $data;
+
+            return $this->render();
+        } elseif (version_compare(VERSION, '2.1.0.2', '>')) {
             if (file_exists(DIR_TEMPLATE.$this->config->get('config_template').'/template/payment/frisbee.tpl')) {
                 return $this->load->view($this->config->get('config_template').'/template/payment/frisbee.tpl', $data);
             } else {
