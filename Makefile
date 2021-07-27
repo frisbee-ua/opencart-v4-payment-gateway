@@ -4,6 +4,6 @@ build:
 	mkdir -p upload
 	cp -r ./admin/ upload/admin/
 	cp -r ./catalog/ upload/catalog/
-	cp ./frisbee-payment-gateway.ocmod.xml upload/
-	zip -r "$(ARCHIVENAME)" ./upload/
+	#cp ./frisbee-payment-gateway.ocmod.xml upload/
+	zip -r "$(ARCHIVENAME)" ./upload/ install.xml
 	rm -rf ./upload/

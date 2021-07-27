@@ -7,10 +7,72 @@ class ControllerPaymentFrisbee extends Controller
 	 */
 	private $error = [];
 
+	public function install()
+	{
+		if (version_compare(VERSION, '2.3.0.0', '>=')
+			&& version_compare(VERSION, '3.0.0.0', '<')
+		) {
+			$this->install_v2_3();
+		} elseif (version_compare(VERSION, '3.0.0.0', '>=')
+			&& version_compare(VERSION, '4.0.0.0', '<')
+		) {
+			$this->install_v3_0();
+		}
+	}
+
+	public function uninstall()
+	{
+		if (version_compare(VERSION, '2.3.0.0', '>=')
+			&& version_compare(VERSION, '3.0.0.0', '<')
+		) {
+			$this->uninstall_v2_3();
+		} elseif (version_compare(VERSION, '3.0.0.0', '>=')
+			&& version_compare(VERSION, '4.0.0.0', '<')
+		) {
+			$this->uninstall_v3_0();
+		}
+	}
+
+	public function install_v2_3()
+	{
+		$this->load->model('extension/event');
+		$this->model_extension_event->addEvent('frisbee_preauth_capture', 'catalog/model/checkout/order/addOrderHistory/before', 'extension/payment/frisbee/capture');
+	}
+
+	public function uninstall_v2_3()
+	{
+		$this->load->model('extension/event');
+		$this->model_extension_event->deleteEvent('frisbee_preauth_capture');
+	}
+
+	public function install_v3_0()
+	{
+		$this->load->model('setting/event');
+		$this->model_setting_event->addEvent('frisbee_capture', 'catalog/model/checkout/order/addOrderHistory/before', 'extension/payment/frisbee/capture');
+	}
+
+	public function uninstall_v3_0()
+	{
+		$this->load->model('setting/event');
+		$this->model_setting_event->deleteEventByCode('frisbee_capture');
+	}
+
 	public function index()
 	{
 		if (version_compare(VERSION, '2.0.0.0', '<')) {
 			$this->index_v1_5();
+		} elseif (version_compare(VERSION, '2.0.0.0', '>=')
+			&& version_compare(VERSION, '2.3.0.0', '<')
+		) {
+			$this->index_v2_0();
+		} elseif (version_compare(VERSION, '2.3.0.0', '>=')
+			&& version_compare(VERSION, '3.0.0.0', '<')
+		) {
+			$this->index_v2_3();
+		} elseif (version_compare(VERSION, '3.0.0.0', '>=')
+			&& version_compare(VERSION, '4.0.0.0', '<')
+		) {
+			$this->index_v3_0();
 		} else {
 			$this->index_v2_0();
 		}
@@ -61,7 +123,7 @@ class ControllerPaymentFrisbee extends Controller
 			'error_merchant',
 			'error_secretkey',
 			'text_edit',
-			'entry_help_lang',
+			'entry_help_lang'
 		];
 
 		foreach ($arr as $value) {
@@ -73,9 +135,9 @@ class ControllerPaymentFrisbee extends Controller
 		$data['text_disabled'] = $this->language->get('text_disabled');
 		$data['entry_order_process_status'] = $this->language->get('entry_order_process_status');
 
-		$arr = ["warning", "merchant", "secretkey", "type"];
+		$arr = ['warning', 'merchant', 'secretkey', 'type'];
 		foreach ($arr as $value) {
-			$data['error_'.$value] = (isset($this->error[$value])) ? $this->error[$value] : "";
+			$data['error_'.$value] = (isset($this->error[$value])) ? $this->error[$value] : '';
 		}
 
 		$data['breadcrumbs'] = [];
@@ -104,7 +166,7 @@ class ControllerPaymentFrisbee extends Controller
 		$this->load->model('localisation/order_status');
 
 		$data['order_statuses'] = $this->model_localisation_order_status->getOrderStatuses();
-		$data['frisbee_currencies'] = ['UAH', 'EUR', 'USD', 'GBP', 'RUB'];
+		$data['payment_frisbee_currencies'] = ['UAH', 'EUR', 'USD', 'GBP', 'RUB'];
 		$arr = [
 			'frisbee_merchant',
 			'frisbee_secretkey',
@@ -119,7 +181,7 @@ class ControllerPaymentFrisbee extends Controller
 			'frisbee_order_process_status_id',
 			'frisbee_order_cancelled_status_id',
 			'frisbee_currency',
-			'frisbee_styles',
+			'frisbee_styles'
 		];
 
 		foreach ($arr as $value) {
@@ -161,9 +223,9 @@ class ControllerPaymentFrisbee extends Controller
 		$this->data['text_disabled'] = $this->language->get('text_disabled');
 		$this->data['entry_order_process_status'] = $this->language->get('entry_order_process_status');
 
-		$arr = array("warning", "merchant", "secretkey", "type");
+		$arr = array('warning', 'merchant', 'secretkey', 'type');
 		foreach ($arr as $value) {
-			$this->data['error_'.$value] = (isset($this->error[$value])) ? $this->error[$value] : "";
+			$this->data['error_'.$value] = (isset($this->error[$value])) ? $this->error[$value] : '';
 		}
 
 		$this->data['breadcrumbs'] = array();
@@ -210,17 +272,231 @@ class ControllerPaymentFrisbee extends Controller
 		$this->response->setOutput($this->render());
 	}
 
+	public function index_v2_3()
+	{
+		$this->load->language('extension/payment/frisbee');
+		$this->document->setTitle($this->language->get('heading_title'));
+		$this->load->model('setting/setting');
+		$this->load->model('localisation/language');
+		$languages = $this->model_localisation_language->getLanguages();
+		foreach ($languages as $language) {
+			if (isset($this->error['bank'.$language['language_id']])) {
+				$data['error_bank'.$language['language_id']] = $this->error['bank'.$language['language_id']];
+			} else {
+				$data['error_bank'.$language['language_id']] = '';
+			}
+		}
+
+		if (($this->request->server['REQUEST_METHOD'] == 'POST') && $this->validate()) {
+			$this->model_setting_setting->editSetting('frisbee', $this->request->post);
+			$this->session->data['success'] = $this->language->get('text_success');
+			$this->response->redirect($this->url->link('extension/extension', 'token='.$this->session->data['token'].'&type=payment', true));
+		}
+
+		$arr = [
+			'heading_title',
+			'text_payment',
+			'text_success',
+			'text_pay',
+			'text_card',
+			'entry_merchant',
+			'entry_styles',
+			'entry_secretkey',
+			'entry_order_status',
+			'entry_currency',
+			'entry_backref',
+			'entry_server_back',
+			'entry_payment_type',
+			'entry_common_type',
+			'entry_preauth_type',
+			'entry_language',
+			'entry_status',
+			'entry_order_status_cancelled',
+			'entry_sort_order',
+			'error_permission',
+			'error_merchant',
+			'error_secretkey',
+			'text_edit',
+			'entry_help_lang',
+			'entry_is_test'
+		];
+
+		foreach ($arr as $value) {
+			$data[$value] = $this->language->get($value);
+		}
+
+		$data['button_save'] = $this->language->get('button_save');
+		$data['button_cancel'] = $this->language->get('button_cancel');
+		$data['text_enabled'] = $this->language->get('text_enabled');
+		$data['text_disabled'] = $this->language->get('text_disabled');
+		$data['entry_order_process_status'] = $this->language->get('entry_order_process_status');
+
+		$arr = ['warning', 'merchant', 'secretkey', 'type'];
+		foreach ($arr as $value) {
+			$data['error_'.$value] = (isset($this->error[$value])) ? $this->error[$value] : '';
+		}
+
+		$data['breadcrumbs'] = [];
+		$data['breadcrumbs'][] = [
+			'text' => $this->language->get('text_home'),
+			'href' => $this->url->link('common/dashboard', 'token='.$this->session->data['token'], 'SSL'),
+			'separator' => false,
+		];
+		$data['breadcrumbs'][] = [
+			'text' => $this->language->get('text_payment'),
+			'href' => $this->url->link('extension/payment', 'token='.$this->session->data['token'], 'SSL'),
+			'separator' => ' :: ',
+		];
+		$data['breadcrumbs'][] = [
+			'text' => $this->language->get('heading_title'),
+			'href' => $this->url->link('extension/payment/frisbee', 'token='.$this->session->data['token'], 'SSL'),
+			'separator' => ' :: ',
+		];
+
+		$data['action'] = $this->url->link('extension/payment/frisbee', 'token='.$this->session->data['token'], 'SSL');
+		$data['cancel'] = $this->url->link('extension/extension', 'token='.$this->session->data['token'], 'SSL');
+		$this->load->model('localisation/order_status');
+
+		$data['order_statuses'] = $this->model_localisation_order_status->getOrderStatuses();
+		$data['frisbee_currencies'] = array('UAH', 'EUR', 'USD', 'GBP', 'RUB');
+
+		$arr = [
+			'frisbee_merchant',
+			'frisbee_secretkey',
+			'frisbee_backref',
+			'frisbee_server_back',
+			'frisbee_order_cancelled_status_id',
+			'frisbee_language',
+			'frisbee_status',
+			'frisbee_sort_order',
+			'frisbee_order_status_id',
+			'frisbee_order_process_status_id',
+			'frisbee_currency',
+			'frisbee_payment_type',
+			'frisbee_styles',
+			'frisbee_is_test'
+		];
+
+		foreach ($arr as $value) {
+			$data[$value] = (isset($this->request->post[$value])) ? $this->request->post[$value] : $this->config->get($value);
+		}
+
+		$data['header'] = $this->load->controller('common/header');
+		$data['column_left'] = $this->load->controller('common/column_left');
+		$data['footer'] = $this->load->controller('common/footer');
+
+		$this->response->setOutput($this->load->view('extension/payment/frisbee.tpl', $data));
+	}
+
+	public function index_v3_0()
+	{
+		$this->load->language('extension/payment/frisbee');
+		$this->document->setTitle($this->language->get('heading_title'));
+		$this->load->model('setting/setting');
+		$this->load->model('localisation/language');
+		$languages = $this->model_localisation_language->getLanguages();
+		foreach ($languages as $language) {
+			if (isset($this->error['bank' . $language['language_id']])) {
+				$data['error_bank' . $language['language_id']] = $this->error['bank' . $language['language_id']];
+			} else {
+				$data['error_bank' . $language['language_id']] = '';
+			}
+		}
+
+		if (($this->request->server['REQUEST_METHOD'] == 'POST') && $this->validate()) {
+			$this->model_setting_setting->editSetting('payment_frisbee', $this->request->post);
+			$this->session->data['success'] = $this->language->get('text_success');
+			$this->response->redirect($this->url->link('marketplace/extension', 'user_token=' . $this->session->data['user_token'] . '&type=payment', true));
+		}
+
+		$arr = array(
+			'heading_title', 'text_payment', 'text_success', 'text_pay', 'text_card', 'entry_geo_zone', 'text_all_zones',
+			'entry_merchant', 'entry_styles', 'entry_secretkey', 'entry_order_status','entry_currency', 'entry_backref',
+			'entry_server_back', 'entry_payment_type', 'entry_common_type', 'entry_preauth_type', 'entry_language',
+			'entry_status', 'entry_order_status_cancelled', 'entry_sort_order', 'error_permission', 'error_merchant',
+			'error_secretkey', 'text_edit', 'entry_help_lang', 'entry_is_test'
+		);
+
+		foreach ($arr as $value) {
+			$data[$value] = $this->language->get($value);
+		}
+
+		$data['button_save'] = $this->language->get('button_save');
+		$data['button_cancel'] = $this->language->get('button_cancel');
+		$data['text_enabled'] = $this->language->get('text_enabled');
+		$data['text_disabled'] = $this->language->get('text_disabled');
+		$data['entry_order_process_status'] = $this->language->get('entry_order_process_status');
+
+		$arr = array('warning', 'merchant', 'secretkey', 'type');
+		foreach ($arr as $value) {
+			$data['error_'.$value] = (isset($this->error[$value])) ? $this->error[$value] : '';
+		}
+
+		$data['breadcrumbs'] = array();
+		$data['breadcrumbs'][] = array(
+			'text' => $this->language->get('text_home'),
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['user_token'], true),
+			'separator' => false
+		);
+		$data['breadcrumbs'][] = array(
+			'text' => $this->language->get('text_payment'),
+			'href' => $this->url->link('marketplace/extension', 'user_token=' . $this->session->data['user_token'], true),
+			'separator' => ' :: '
+		);
+		$data['breadcrumbs'][] = array(
+			'text' => $this->language->get('heading_title'),
+			'href' => $this->url->link('extension/payment/frisbee', 'user_token=' . $this->session->data['user_token'], true),
+			'separator' => ' :: '
+		);
+
+		$data['action'] = $this->url->link('extension/payment/frisbee', 'user_token=' . $this->session->data['user_token'], true);
+		$data['cancel'] = $this->url->link('marketplace/extension', 'user_token=' . $this->session->data['user_token'] . '&type=payment', true);
+
+		$this->load->model('localisation/order_status');
+		$this->load->model('localisation/geo_zone');
+
+		$data['order_statuses'] = $this->model_localisation_order_status->getOrderStatuses();
+		$data['frisbee_currencies'] = array('UAH', 'EUR', 'USD', 'GBP', 'RUB');
+
+		$array_data = array(
+			'payment_frisbee_merchant',
+			'payment_frisbee_secretkey',
+			'payment_frisbee_backref',
+			'payment_frisbee_server_back',
+			'payment_frisbee_order_cancelled_status_id',
+			'payment_frisbee_geo_zone_id',
+			'payment_frisbee_language',
+			'payment_frisbee_status',
+			'payment_frisbee_sort_order',
+			'payment_frisbee_order_status_id',
+			'payment_frisbee_order_process_status_id',
+			'payment_frisbee_currency',
+			'payment_frisbee_type',
+			'payment_frisbee_is_test'
+		);
+
+		foreach ($array_data as $value) {
+			$data[$value] = (isset($this->request->post[$value])) ? $this->request->post[$value] : $this->config->get($value);
+		}
+
+		$data['header'] = $this->load->controller('common/header');
+		$data['column_left'] = $this->load->controller('common/column_left');
+		$data['footer'] = $this->load->controller('common/footer');
+
+		$this->response->setOutput($this->load->view('extension/payment/frisbee', $data));
+	}
+
 	private function validate()
 	{
-		if (! $this->user->hasPermission('modify', 'payment/frisbee')) {
+		if (!$this->user->hasPermission('modify', 'payment/frisbee') && !$this->user->hasPermission('modify', 'extension/payment/frisbee')) {
 			$this->error['warning'] = $this->language->get('error_permission');
 		}
 
-		if (! $this->request->post['frisbee_merchant']) {
+		if (!$this->request->post['frisbee_merchant'] && !$this->request->post['payment_frisbee_merchant']) {
 			$this->error['merchant'] = $this->language->get('error_merchant');
 		}
 
-		if (! $this->request->post['frisbee_secretkey']) {
+		if (!$this->request->post['frisbee_secretkey'] && !$this->request->post['payment_frisbee_secretkey']) {
 			$this->error['secretkey'] = $this->language->get('error_secretkey');
 		}
 

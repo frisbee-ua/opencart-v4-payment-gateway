@@ -129,7 +129,6 @@ class ControllerPaymentFrisbee extends Controller
 
     public function callback()
     {
-
         if (empty($this->request->post)) {
             $callback = json_decode(file_get_contents("php://input"));
             if (empty($callback)) {
@@ -143,9 +142,20 @@ class ControllerPaymentFrisbee extends Controller
 
         $this->language->load('payment/frisbee');
 
+        $merchantId = $this->config->get('frisbee_merchant');
+        $secretKey = $this->config->get('frisbee_secretkey');
+
+        if (empty($merchantId)) {
+            $merchantId = $this->config->get('payment_frisbee_merchant');
+        }
+
+        if (empty($secretKey)) {
+            $secretKey = $this->config->get('payment_frisbee_secretkey');
+        }
+
         $options = [
-            'merchant' => $this->config->get('frisbee_merchant'),
-            'secretkey' => $this->config->get('frisbee_secretkey'),
+            'merchant' => $merchantId,
+            'secretkey' => $secretKey,
         ];
 
         $paymentInfo = $this->isPaymentValid($options, $this->request->post);
@@ -158,16 +168,16 @@ class ControllerPaymentFrisbee extends Controller
         if ($paymentInfo === true) {
 
             if ($this->request->post['order_status'] == $this->ORDER_APPROVED and $total == $this->request->post['amount']) {
-                $comment = "Fondy payment id : ".$this->request->post['payment_id'];
+                $comment = "Frisbee payment id : ".$this->request->post['payment_id'];
                 $this->model_checkout_order->addOrderHistory($order_id, $this->config->get('frisbee_order_status_id'), $comment, $notify = true, $override = false);
                 die('Ok');
             } else {
                 if ($this->request->post['order_status'] == $this->ORDER_PROCESSING) {
-                    $comment = "Fondy payment id : ".$this->request->post['payment_id'].$paymentInfo;
+                    $comment = "Frisbee payment id : ".$this->request->post['payment_id'].$paymentInfo;
                     $this->model_checkout_order->addOrderHistory($order_id, $this->config->get('frisbee_order_process_status_id'), $comment, $notify = false, $override = false);
                     die($paymentInfo);
                 } else {
-                    if ($this->request->post['order_status'] == $this->ORDER_DECLINED or $this->request->post['order_status'] == $this->ORDER_EXPIRED) {
+                    if ($this->request->post['order_status'] == $this->ORDER_DECLINED || $this->request->post['order_status'] == $this->ORDER_EXPIRED) {
                         $comment = "Payment cancelled";
                         $this->model_checkout_order->addOrderHistory($order_id, $this->config->get('frisbee_order_cancelled_status_id'), $comment, $notify = false, $override = false);
                     }

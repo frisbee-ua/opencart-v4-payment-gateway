@@ -1,10 +1,10 @@
 <?php
 
-class ModelPaymentFrisbee extends Model
+class ModelExtensionPaymentFrisbee extends Model
 {
     public function getMethod($address, $total)
     {
-        $this->load->language('payment/frisbee');
+        $this->load->language('extension/payment/frisbee');
 
         return array(
             'code' => 'frisbee',
@@ -14,5 +14,4 @@ class ModelPaymentFrisbee extends Model
         );
     }
 }
-
 ?>
