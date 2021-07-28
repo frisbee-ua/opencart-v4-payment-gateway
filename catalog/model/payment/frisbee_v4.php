@@ -1,10 +1,12 @@
 <?php
 
-class ModelPaymentFrisbee extends Model
+namespace Opencart\Application\Model\Extension\Frisbee\Payment;
+
+class Frisbee extends \Opencart\System\Engine\Model
 {
     public function getMethod($address, $total)
     {
-        $this->load->language('payment/frisbee');
+        $this->load->language('extension/frisbee/extension/payment/frisbee');
 
         return array(
             'code' => 'frisbee',
@@ -13,10 +15,6 @@ class ModelPaymentFrisbee extends Model
             'sort_order' => $this->config->get('frisbee_sort_order'),
         );
     }
-}
-
-if (version_compare(VERSION, '3.9.9.9', '>')) {
-    require_once 'frisbee_v4.php';
 }
 
 ?>

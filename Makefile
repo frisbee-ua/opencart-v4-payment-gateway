@@ -1,4 +1,4 @@
-ARCHIVENAME = frisbee-payment-gateway.ocmod.zip
+ARCHIVENAME = frisbee.ocmod.zip
 
 build:
 	mkdir -p upload

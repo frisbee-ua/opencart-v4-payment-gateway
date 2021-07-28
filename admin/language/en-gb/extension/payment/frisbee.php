@@ -4,7 +4,7 @@ $_['heading_title']      = 'Frisbee';
 $_['text_edit']       = 'Edit module';
 // Text
 $_['text_payment']       = 'Payment';
-$_['text_frisbee']       	 = '<a onclick="window.open(\'http://fondy.eu/\');"><img src="view/image/payment/frisbee.png" alt="Fondy" title="Fondy" style="border: 1px solid #EEEEEE;" /></a>';
+$_['text_frisbee']       	 = '<a onclick="window.open(\'http://frisbee.ua/\');"><img src="view/image/payment/frisbee.png" alt="Frisbee" title="Frisbee" style="border: 1px solid #EEEEEE;" /></a>';
 $_['text_success']       = 'Settings updated';
 $_['text_pay']           = 'Frisbee';
 $_['text_card']          = 'Credit Card';

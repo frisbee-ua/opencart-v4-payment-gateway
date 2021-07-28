@@ -31,7 +31,11 @@ class ControllerPaymentFrisbee extends Controller
         if (($this->config->get('frisbee_currency'))) {
             $frisbee_currency = $this->config->get('frisbee_currency');
         } else {
-            $frisbee_currency = $this->currency->getCode();
+            if (version_compare(VERSION, '3.9.9.9', '>')) {
+                $frisbee_currency = $order_info['currency_code'];
+            } else {
+                $frisbee_currency = $this->currency->getCode();
+            }
         }
 
         if ($this->config->get('frisbee_is_test')) {
@@ -88,18 +92,24 @@ class ControllerPaymentFrisbee extends Controller
             $this->data = $data;
 
             return $this->render();
-        } elseif (version_compare(VERSION, '2.1.0.2', '>')) {
+        } elseif (version_compare(VERSION, '2.1.0.2', '>')
+            && version_compare(VERSION, '2.3.0.0', '<')
+        ) {
             if (file_exists(DIR_TEMPLATE.$this->config->get('config_template').'/template/payment/frisbee.tpl')) {
                 return $this->load->view($this->config->get('config_template').'/template/payment/frisbee.tpl', $data);
             } else {
                 return $this->load->view('/payment/frisbee.tpl', $data);
             }
-        } else {
+        } elseif (version_compare(VERSION, '2.3.0.0', '>=')
+            && version_compare(VERSION, '3.9.9.9', '<')
+        ) {
             if (file_exists(DIR_TEMPLATE.$this->config->get('config_template').'/template/payment/frisbee.tpl')) {
                 return $this->load->view($this->config->get('config_template').'/template/payment/frisbee.tpl', $data);
             } else {
                 return $this->load->view('default/template/payment/frisbee.tpl', $data);
             }
+        } else {
+            return $this->load->view('extension/frisbee/payment/frisbee_v4', $data);
         }
     }
 
@@ -225,6 +235,10 @@ class ControllerPaymentFrisbee extends Controller
             return $str;
         }
     }
+}
+
+if (version_compare(VERSION, '3.9.9.9', '>')) {
+    require_once 'frisbee_v4.php';
 }
 
 ?>
