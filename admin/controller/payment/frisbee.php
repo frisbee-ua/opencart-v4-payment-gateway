@@ -657,7 +657,7 @@ class ControllerPaymentFrisbee extends Controller
 }
 
 if (version_compare(VERSION, '3.9.9.9', '>')) {
-	require_once 'includes/frisbee_v4.php';
+	require_once __DIR__ . '/../includes/frisbee_v4.php';
 }
 
 ?>

@@ -2,5 +2,5 @@
 
 namespace Opencart\Application\Controller\Extension\Frisbee\Payment;
 
-class Frisbee extends ControllerPaymentFrisbee {}
+class Frisbee extends \ControllerPaymentFrisbee {}
 
