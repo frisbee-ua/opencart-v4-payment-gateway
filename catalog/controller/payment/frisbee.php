@@ -2,9 +2,9 @@
 
 class ControllerPaymentFrisbee extends Controller
 {
-    protected $RESPONCE_SUCCESS = 'success';
+    protected $RESPONSE_SUCCESS = 'success';
 
-    protected $RESPONCE_FAIL = 'failure';
+    protected $RESPONSE_FAIL = 'failure';
 
     protected $ORDER_SEPARATOR = '_';
 
@@ -31,7 +31,7 @@ class ControllerPaymentFrisbee extends Controller
         if (($this->config->get('frisbee_currency'))) {
             $frisbee_currency = $this->config->get('frisbee_currency');
         } else {
-            if (version_compare(VERSION, '3.9.9.9', '>')) {
+            if (version_compare(VERSION, '3.0.0.0', '>=')) {
                 $frisbee_currency = $order_info['currency_code'];
             } else {
                 $frisbee_currency = $this->currency->getCode();
@@ -48,7 +48,7 @@ class ControllerPaymentFrisbee extends Controller
             $secretKey = $this->config->get('frisbee_secretkey');
         }
 
-        $frisbee_args = [
+        $frisbee_args = array(
             'order_id' => $order_id.$this->ORDER_SEPARATOR.time(),
             'merchant_id' => $merchantId,
             'order_desc' => $desc,
@@ -58,26 +58,27 @@ class ControllerPaymentFrisbee extends Controller
             'server_callback_url' => $callback,
             'lang' => $this->config->get('frisbee_language'),
             'sender_email' => $order_info['email'],
-        ];
+            'payment_systems' => 'frisbee'
+        );
 
         $frisbee_args['signature'] = $this->getSignature($frisbee_args, $secretKey);
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url.'/api/checkout/url/');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-type: application/json']);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-type: application/json'));
         curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(['request' => $frisbee_args]));
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(array('request' => $frisbee_args)));
         $result = json_decode(curl_exec($ch));
         if ($result->response->response_status == 'failure') {
-            $out = [
+            $out = array(
                 'result' => false,
                 'message' => $result->response->error_message,
-            ];
+            );
         } else {
-            $out = [
+            $out = array(
                 'result' => true,
                 'url' => $result->response->checkout_url,
-            ];
+            );
         }
         $data['frisbee'] = $out;
         $data['styles'] = $this->config->get('frisbee_styles');
@@ -92,7 +93,7 @@ class ControllerPaymentFrisbee extends Controller
             $this->data = $data;
 
             return $this->render();
-        } elseif (version_compare(VERSION, '2.1.0.2', '>')
+        } elseif (version_compare(VERSION, '2.0.0.0', '>=')
             && version_compare(VERSION, '2.3.0.0', '<')
         ) {
             if (file_exists(DIR_TEMPLATE.$this->config->get('config_template').'/template/payment/frisbee.tpl')) {
@@ -101,13 +102,13 @@ class ControllerPaymentFrisbee extends Controller
                 return $this->load->view('/payment/frisbee.tpl', $data);
             }
         } elseif (version_compare(VERSION, '2.3.0.0', '>=')
+            && version_compare(VERSION, '3.0.0.0', '<')
+        ) {
+            return $this->load->view('payment/frisbee.tpl', $data);
+        } elseif (version_compare(VERSION, '3.0.0.0', '>=')
             && version_compare(VERSION, '3.9.9.9', '<')
         ) {
-            if (file_exists(DIR_TEMPLATE.$this->config->get('config_template').'/template/payment/frisbee.tpl')) {
-                return $this->load->view($this->config->get('config_template').'/template/payment/frisbee.tpl', $data);
-            } else {
-                return $this->load->view('default/template/payment/frisbee.tpl', $data);
-            }
+            return $this->load->view('/extension/payment/frisbee', $data);
         } else {
             return $this->load->view('extension/frisbee/payment/frisbee_v4', $data);
         }
@@ -139,16 +140,7 @@ class ControllerPaymentFrisbee extends Controller
 
     public function callback()
     {
-        if (empty($this->request->post)) {
-            $callback = json_decode(file_get_contents("php://input"));
-            if (empty($callback)) {
-                die();
-            }
-            $this->request->post = [];
-            foreach ($callback as $key => $val) {
-                $this->request->post[$key] = $val;
-            }
-        }
+        $data = $this->getCallbackData();
 
         $this->language->load('payment/frisbee');
 
@@ -168,32 +160,90 @@ class ControllerPaymentFrisbee extends Controller
             'secretkey' => $secretKey,
         ];
 
-        $paymentInfo = $this->isPaymentValid($options, $this->request->post);
+        $paymentInfo = $this->isPaymentValid($options, $data);
 
-        list($order_id,) = explode($this->ORDER_SEPARATOR, $this->request->post['order_id']);
+        list($order_id,) = explode($this->ORDER_SEPARATOR, $data['order_id']);
         $this->load->model('checkout/order');
         $order_info = $this->model_checkout_order->getOrder($order_id);
         $total = round($order_info['total'] * $order_info['currency_value'] * 100);
 
         if ($paymentInfo === true) {
-
-            if ($this->request->post['order_status'] == $this->ORDER_APPROVED and $total == $this->request->post['amount']) {
-                $comment = "Frisbee payment id : ".$this->request->post['payment_id'];
-                $this->model_checkout_order->addOrderHistory($order_id, $this->config->get('frisbee_order_status_id'), $comment, $notify = true, $override = false);
-                die('Ok');
+            if (version_compare(VERSION, '2.0.0.0', '<')) {
+                $this->callback_v1_5($data, $order_id, $paymentInfo);
+            } elseif (version_compare(VERSION, '2.0.0.0', '>=')
+                && version_compare(VERSION, '2.3.0.0', '<')
+            ) {
+                $this->callback_v2_0($data, $order_id, $paymentInfo);
+            } elseif (version_compare(VERSION, '2.3.0.0', '>=')
+                && version_compare(VERSION, '3.0.0.0', '<')
+            ) {
+                $this->callback_v2_0($data, $order_id, $paymentInfo);
+            } elseif (version_compare(VERSION, '3.0.0.0', '>=')
+                && version_compare(VERSION, '3.9.9.9', '<=')
+            ) {
+                $this->callback_v2_0($data, $order_id, $paymentInfo);
             } else {
-                if ($this->request->post['order_status'] == $this->ORDER_PROCESSING) {
-                    $comment = "Frisbee payment id : ".$this->request->post['payment_id'].$paymentInfo;
-                    $this->model_checkout_order->addOrderHistory($order_id, $this->config->get('frisbee_order_process_status_id'), $comment, $notify = false, $override = false);
-                    die($paymentInfo);
-                } else {
-                    if ($this->request->post['order_status'] == $this->ORDER_DECLINED || $this->request->post['order_status'] == $this->ORDER_EXPIRED) {
-                        $comment = "Payment cancelled";
-                        $this->model_checkout_order->addOrderHistory($order_id, $this->config->get('frisbee_order_cancelled_status_id'), $comment, $notify = false, $override = false);
-                    }
-                }
+                $this->callback_v2_0($data, $order_id, $paymentInfo);
             }
         }
+    }
+
+    protected function callback_v1_5($data, $order_id, $paymentInfo)
+    {
+        $value = serialize($data);
+        if ($data['order_status'] == $this->ORDER_APPROVED) {
+            $comment = "Frisbee payment id: " . $data['payment_id'];
+            $order_info = $this->model_checkout_order->getOrder($order_id);
+            $this->model_checkout_order->update($order_id, $this->config->get('frisbee_order_status_id'), $comment, $notify = true, $value);
+            die('Ok');
+        } elseif ($data['order_status'] == $this->ORDER_PROCESSING) {
+            $this->model_checkout_order->update($order_id, $this->config->get('frisbee_order_process_status_id'), $comment = '', $notify = true, $value='');
+            die($paymentInfo);
+        } else {
+            $comment = "Payment cancelled";
+            $this->model_checkout_order->update($order_id, $this->config->get('frisbee_order_cancelled_status_id'), $comment, $notify = false, $override = false);
+            die;
+        }
+    }
+
+    protected function callback_v2_0($data, $order_id, $paymentInfo)
+    {
+        if ($data['order_status'] == $this->ORDER_APPROVED) {
+            $comment = "Frisbee payment id: " . $data['payment_id'];
+            $order_status_id = $this->config->get('frisbee_order_status_id') ?: $this->config->get('payment_frisbee_order_status_id');
+            $this->model_checkout_order->addOrderHistory($order_id, $order_status_id, $comment, $notify = true, $override = false);
+            die('Ok');
+        } elseif ($data['order_status'] == $this->ORDER_PROCESSING) {
+            $comment = "Frisbee payment id: " . $data['payment_id'];
+            $order_process_status_id = $this->config->get('frisbee_order_process_status_id') ?: $this->config->get('payment_frisbee_order_process_status_id');
+            $this->model_checkout_order->addOrderHistory($order_id, $order_process_status_id, $comment, $notify = false, $override = false);
+            die($paymentInfo);
+        } else {
+            $comment = "Payment cancelled";
+            $order_cancelled_status_id = $this->config->get('frisbee_order_cancelled_status_id') ?: $this->config->get('payment_frisbee_order_cancelled_status_id');
+            $this->model_checkout_order->addOrderHistory($order_id, $order_cancelled_status_id, $comment, $notify = false, $override = false);
+        }
+    }
+
+    /**
+     * @return array
+     */
+    protected function getCallbackData()
+    {
+        $content = file_get_contents('php://input');
+
+        if (isset($_SERVER['CONTENT_TYPE'])) {
+            switch ($_SERVER['CONTENT_TYPE']) {
+                case 'application/json':
+                    return json_decode($content, true);
+                case 'application/xml':
+                    return (array) simplexml_load_string($content, "SimpleXMLElement", LIBXML_NOCDATA);
+                default:
+                    return $_REQUEST;
+            }
+        }
+
+        return $_REQUEST;
     }
 
     public function isPaymentValid($frisbeeSettings, $response)
@@ -238,7 +288,7 @@ class ControllerPaymentFrisbee extends Controller
 }
 
 if (version_compare(VERSION, '3.9.9.9', '>')) {
-    require_once 'frisbee_v4.php';
+    require_once 'includes/frisbee_v4.php';
 }
 
 ?>

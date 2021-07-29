@@ -10,7 +10,7 @@ class ModelExtensionPaymentFrisbee extends Model
             'code' => 'frisbee',
             'terms' => '',
             'title' => $this->language->get('text_title'),
-            'sort_order' => $this->config->get('frisbee_sort_order'),
+            'sort_order' => $this->config->get('frisbee_sort_order') ?: $this->config->get('payment_frisbee_sort_order'),
         );
     }
 }
