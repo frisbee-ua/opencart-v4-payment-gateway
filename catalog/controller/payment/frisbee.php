@@ -6,13 +6,13 @@ class ControllerPaymentFrisbee extends Controller
 
     protected $RESPONSE_FAIL = 'failure';
 
-    protected $ORDER_SEPARATOR = '_';
+    protected $ORDER_SEPARATOR = ':';
 
     protected $SIGNATURE_SEPARATOR = '|';
 
     protected $ORDER_APPROVED = 'approved';
 
-    protected $ORDER_DECLINED = 'declined';
+    protected $ORDER_REJECTED = 'rejected';
 
     protected $ORDER_EXPIRED = 'expired';
 
@@ -194,14 +194,14 @@ class ControllerPaymentFrisbee extends Controller
         if ($data['order_status'] == $this->ORDER_APPROVED) {
             $comment = "Frisbee payment id: " . $data['payment_id'];
             $order_info = $this->model_checkout_order->getOrder($order_id);
-            $this->model_checkout_order->update($order_id, $this->config->get('frisbee_order_status_id'), $comment, $notify = true, $value);
+            $this->model_checkout_order->update($order_id, $this->config->get('frisbee_order_status_id'), $comment, true, $value);
             die('Ok');
         } elseif ($data['order_status'] == $this->ORDER_PROCESSING) {
-            $this->model_checkout_order->update($order_id, $this->config->get('frisbee_order_process_status_id'), $comment = '', $notify = true, $value='');
+            $this->model_checkout_order->update($order_id, $this->config->get('frisbee_order_process_status_id'), '', true, '');
             die($paymentInfo);
         } else {
             $comment = "Payment cancelled";
-            $this->model_checkout_order->update($order_id, $this->config->get('frisbee_order_cancelled_status_id'), $comment, $notify = false, $override = false);
+            $this->model_checkout_order->update($order_id, $this->config->get('frisbee_order_cancelled_status_id'), $comment, false, false);
             die;
         }
     }
@@ -211,17 +211,17 @@ class ControllerPaymentFrisbee extends Controller
         if ($data['order_status'] == $this->ORDER_APPROVED) {
             $comment = "Frisbee payment id: " . $data['payment_id'];
             $order_status_id = $this->config->get('frisbee_order_status_id') ?: $this->config->get('payment_frisbee_order_status_id');
-            $this->model_checkout_order->addOrderHistory($order_id, $order_status_id, $comment, $notify = true, $override = false);
+            $this->model_checkout_order->addOrderHistory($order_id, $order_status_id, $comment, true, false);
             die('Ok');
         } elseif ($data['order_status'] == $this->ORDER_PROCESSING) {
             $comment = "Frisbee payment id: " . $data['payment_id'];
             $order_process_status_id = $this->config->get('frisbee_order_process_status_id') ?: $this->config->get('payment_frisbee_order_process_status_id');
-            $this->model_checkout_order->addOrderHistory($order_id, $order_process_status_id, $comment, $notify = false, $override = false);
+            $this->model_checkout_order->addOrderHistory($order_id, $order_process_status_id, $comment, false, false);
             die($paymentInfo);
         } else {
             $comment = "Payment cancelled";
             $order_cancelled_status_id = $this->config->get('frisbee_order_cancelled_status_id') ?: $this->config->get('payment_frisbee_order_cancelled_status_id');
-            $this->model_checkout_order->addOrderHistory($order_id, $order_cancelled_status_id, $comment, $notify = false, $override = false);
+            $this->model_checkout_order->addOrderHistory($order_id, $order_cancelled_status_id, $comment, false, false);
         }
     }
 

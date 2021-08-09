@@ -13,60 +13,12 @@ class ControllerPaymentFrisbee extends Controller
 
 	public function install()
 	{
-		if (version_compare(VERSION, '2.3.0.0', '<')) {
 
-		} elseif (version_compare(VERSION, '2.3.0.0', '>=')
-			&& version_compare(VERSION, '3.0.0.0', '<')
-		) {
-			$this->install_v2_3();
-		} elseif (version_compare(VERSION, '3.0.0.0', '>=')
-			&& version_compare(VERSION, '4.0.0.0', '<')
-		) {
-			$this->install_v3_0();
-		} else {
-			$this->install_v3_0();
-		}
 	}
 
 	public function uninstall()
 	{
-		if (version_compare(VERSION, '2.3.0.0', '<')) {
 
-		} elseif (version_compare(VERSION, '2.3.0.0', '>=')
-			&& version_compare(VERSION, '3.0.0.0', '<')
-		) {
-			$this->uninstall_v2_3();
-		} elseif (version_compare(VERSION, '3.0.0.0', '>=')
-			&& version_compare(VERSION, '4.0.0.0', '<')
-		) {
-			$this->uninstall_v3_0();
-		} else {
-			$this->uninstall_v3_0();
-		}
-	}
-
-	public function install_v2_3()
-	{
-		$this->load->model('extension/event');
-		$this->model_extension_event->addEvent('frisbee_payment', 'catalog/model/checkout/order/addOrderHistory/before', 'extension/payment/frisbee/payment');
-	}
-
-	public function uninstall_v2_3()
-	{
-		$this->load->model('extension/event');
-		$this->model_extension_event->deleteEvent('frisbee_payment');
-	}
-
-	public function install_v3_0()
-	{
-		$this->load->model('setting/event');
-		$this->model_setting_event->addEvent('frisbee_payment', 'catalog/model/checkout/order/addOrderHistory/before', 'extension/payment/frisbee/payment');
-	}
-
-	public function uninstall_v3_0()
-	{
-		$this->load->model('setting/event');
-		$this->model_setting_event->deleteEventByCode('frisbee_payment');
 	}
 
 	public function index()
