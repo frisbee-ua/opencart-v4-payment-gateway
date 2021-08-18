@@ -3,7 +3,6 @@
 ## System requirements
 
 * PHP 5.6+
-* [cURL extension](http://php.net/manual/en/book.curl.php)
 * Opencart 2.0+
 
 ## Installation
