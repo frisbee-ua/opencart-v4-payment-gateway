@@ -125,22 +125,6 @@
                             </select>
                         </div>
                     </div>
-
-                    <div class="form-group">
-                        <label class="col-sm-2 control-label" for="input-is_test"><?php echo $entry_is_test; ?></label>
-                        <div class="col-sm-10">
-                            <select name="frisbee_is_test" class="form-control">
-                                <? $st0 = $st1 = "";
-                 if ( $frisbee_is_test == 0 ) $st0 = 'selected="selected"';
-                  else $st1 = 'selected="selected"';
-                ?>
-
-                                <option value="1" <?= $st1 ?> ><?php echo $text_enabled; ?></option>
-                                <option value="0" <?= $st0 ?> ><?php echo $text_disabled; ?></option>
-
-                            </select>
-                        </div>
-                    </div>
                 </form>
             </div>
         </div>

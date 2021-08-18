@@ -101,19 +101,6 @@
 							</select></td>
 					</tr>
 					<tr>
-						<td><?php echo $entry_is_test; ?></td>
-						<td><select name="frisbee_is_test">
-								<?php $st0 = $st1 = "";
-                 if ( $frisbee_is_test == 0 ) $st0 = 'selected="selected"';
-                  else $st1 = 'selected="selected"';
-                ?>
-
-								<option value="1" <?= $st1 ?> ><?php echo $text_enabled; ?></option>
-								<option value="0" <?= $st0 ?> ><?php echo $text_disabled; ?></option>
-
-							</select></td>
-					</tr>
-					<tr>
 						<td><?php echo $entry_sort_order; ?></td>
 						<td><input type="text" name="frisbee_sort_order" value="<?php echo $frisbee_sort_order; ?>" size="1" /></td>
 					</tr>

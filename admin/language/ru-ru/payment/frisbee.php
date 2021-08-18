@@ -11,7 +11,6 @@ $_['text_pay'] = 'Frisbee';
 // Entry
 $_['entry_merchant'] = 'Merchant ID:';
 $_['entry_secretkey'] = 'Secret key:';
-$_['entry_is_test'] = 'Test mode:';
 
 $_['text_response_description'] = 'Текст ошибки:';
 $_['text_frisbee_order_status'] = 'Статус заказа:';

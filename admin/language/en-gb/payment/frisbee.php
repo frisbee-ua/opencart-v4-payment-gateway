@@ -15,7 +15,6 @@ $_['text_response_code'] = 'Error code:';
 // Entry
 $_['entry_merchant'] = 'Merchant ID:';
 $_['entry_secretkey'] = 'Secret key:';
-$_['entry_is_test'] = 'Test mode:';
 
 $_['entry_order_status'] = 'Order status after payment:';
 $_['entry_order_process_status'] = 'Order status in progress:';

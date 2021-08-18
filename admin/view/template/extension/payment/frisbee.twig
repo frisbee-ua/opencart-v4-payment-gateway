@@ -137,21 +137,6 @@
                             </select>
                         </div>
                     </div>
-
-                    <div class="form-group">
-                        <label class="col-sm-2 control-label" for="input-is_test">{{ entry_is_test }}</label>
-                        <div class="col-sm-10">
-                            <select name="payment_frisbee_is_test" id="input-status" class="form-control">
-                                {% if payment_frisbee_is_test %}
-                                    <option value="1" selected="selected">{{ text_enabled }}</option>
-                                    <option value="0">{{ text_disabled }}</option>
-                                {% else %}
-                                    <option value="1">{{ text_enabled }}</option>
-                                    <option value="0" selected="selected">{{ text_disabled }}</option>
-                                {% endif %}
-                            </select>
-                        </div>
-                    </div>
                 </form>
             </div>
         </div>
