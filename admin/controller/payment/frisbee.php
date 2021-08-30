@@ -213,7 +213,7 @@ class ControllerPaymentFrisbee extends Controller
 		$this->load->model('localisation/order_status');
 
 		$data['order_statuses'] = $this->model_localisation_order_status->getOrderStatuses();
-		$data['payment_frisbee_currencies'] = ['UAH', 'EUR', 'USD', 'GBP', 'RUB'];
+		$data['frisbee_currencies'] = ['UAH', 'EUR', 'USD', 'GBP', 'RUB'];
 		$arr = [
 			'frisbee_merchant',
 			'frisbee_secretkey',

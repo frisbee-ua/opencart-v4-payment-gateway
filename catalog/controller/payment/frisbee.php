@@ -29,7 +29,7 @@ class ControllerPaymentFrisbee extends Controller
             $backref = $this->url->link('extension/frisbee/payment/frisbee&_=thankYou', '', 'SSL');
             $callback = $this->url->link('extension/frisbee/payment/frisbee&_callback', '', 'SSL');
         } else {
-            $backref = $this->url->link('payment/frisbee/thank_you', '', 'SSL');
+            $backref = $this->url->link('payment/frisbee/thankYou', '', 'SSL');
             $callback = $this->url->link('payment/frisbee/callback', '', 'SSL');
         }
 
@@ -166,7 +166,11 @@ class ControllerPaymentFrisbee extends Controller
 
     public function thankYou()
     {
-        $this->load->language('extension/frisbee/extension/payment/frisbee');
+        if (version_compare(VERSION, '2.0.0.0', '<=')) {
+            $this->load->language('payment/frisbee');
+        } else {
+            $this->load->language('extension/frisbee/extension/payment/frisbee');
+        }
 
         $this->document->setTitle($this->language->get('success_heading_title'));
 
@@ -192,13 +196,24 @@ class ControllerPaymentFrisbee extends Controller
         $data['footer'] = $this->load->controller('common/footer');
         $data['header'] = $this->load->controller('common/header');
 
-        $this->response->setOutput($this->load->view('common/success', $data));
+        if (version_compare(VERSION, '2.0.0.0', '<=')) {
+            $data['heading_title'] = $this->language->get('success_heading_title');
+            $data['button_continue'] = 'Continue';
+
+            if (file_exists(DIR_TEMPLATE.$this->config->get('config_template').'/template/common/success.tpl')) {
+                $this->response->setOutput($this->load->view($this->config->get('config_template').'/template/common/success.tpl', $data));
+            } else {
+                $this->response->setOutput($this->load->view('default/template/common/success.tpl', $data));
+            }
+        } else {
+            $this->response->setOutput($this->load->view('common/success', $data));
+        }
     }
 
     protected function modelCheckoutOrderUpdate($orderId, $orderStatusId, $comment, $notify = false)
     {
-        if (version_compare(VERSION, '2.0.0.0', '<')) {
-            $this->model_checkout_order->update($orderId, $orderStatusId, $comment, $notify, false);
+        if (version_compare(VERSION, '3.0.0.0', '<')) {
+            $this->model_checkout_order->addOrderHistory($orderId, $orderStatusId, $comment, $notify, false);
         } else {
             $this->model_checkout_order->addHistory($orderId, $orderStatusId, $comment, $notify, false);
         }
@@ -254,7 +269,6 @@ class ControllerPaymentFrisbee extends Controller
             'path' => $_SERVER['REQUEST_URI'],
             'uuid' => isset($_SERVER['HTTP_USER_AGENT']) ? base64_encode($_SERVER['HTTP_USER_AGENT']) : time()
         );
-        $reservationData['uuid'] = sprintf('%s_%s', $reservationData['shop_domain'], $reservationData['cms_name']);
 
         return base64_encode(json_encode($reservationData));
     }
