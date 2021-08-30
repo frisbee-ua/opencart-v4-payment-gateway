@@ -47,11 +47,6 @@
 					</tr>
 
 					<tr>
-						<td><?php echo $entry_language; ?></td>
-						<td><input type="text" name="frisbee_language" value="<?php echo ($frisbee_language == "") ? "RU" : $frisbee_language; ?>" /></td>
-					</tr>
-
-					<tr>
 						<td><?php echo $entry_order_status; ?></td>
 						<td><select name="frisbee_order_status_id">
 								<?php

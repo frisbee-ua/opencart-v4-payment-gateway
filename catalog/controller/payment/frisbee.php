@@ -1,6 +1,10 @@
 <?php
 
-require_once __DIR__ . '/includes/FrisbeeService.php';
+require_once __DIR__.'/includes/FrisbeeService.php';
+
+if (!class_exists('Controller')) {
+    class Controller extends \Opencart\System\Engine\Controller {}
+}
 
 class ControllerPaymentFrisbee extends Controller
 {
@@ -13,8 +17,15 @@ class ControllerPaymentFrisbee extends Controller
         $this->load->model('checkout/order');
 
         $order_info = $this->model_checkout_order->getOrder($this->session->data['order_id']);
-        $backref = $this->url->link('payment/frisbee/success', '', 'SSL');
-        $callback = $this->url->link('payment/frisbee/callback', '', 'SSL');
+
+        if (version_compare(VERSION, '3.9.9.9', '>')) {
+            $backref = $this->url->link('extension/frisbee/payment/frisbee|success', '', 'SSL');
+            $callback = $this->url->link('extension/frisbee/payment/frisbee|callback', '', 'SSL');
+        } else {
+            $backref = $this->url->link('payment/frisbee/success', '', 'SSL');
+            $callback = $this->url->link('payment/frisbee/callback', '', 'SSL');
+        }
+
         if (($this->config->get('frisbee_currency'))) {
             $frisbee_currency = $this->config->get('frisbee_currency');
         } else {
@@ -38,17 +49,24 @@ class ControllerPaymentFrisbee extends Controller
         $frisbeeService->setRequestParameterSenderEmail($order_info['email']);
         $frisbeeService->setRequestParameterReservationData($this->generateReservationDataParameter($order_info));
 
-        $checkoutUrl = $frisbeeService->retrieveCheckoutUrl($order_id);
+        try {
+            $checkoutUrl = $frisbeeService->retrieveCheckoutUrl($order_id);
 
-        if (!$checkoutUrl) {
+            if (!$checkoutUrl) {
+                $out = array(
+                    'result' => false,
+                    'message' => $frisbeeService->getRequestResultErrorMessage()
+                );
+            } else {
+                $out = array(
+                    'result' => true,
+                    'url' => $checkoutUrl
+                );
+            }
+        } catch (\Exception $exception) {
             $out = array(
                 'result' => false,
-                'message' => $frisbeeService->getRequestResultErrorMessage()
-            );
-        } else {
-            $out = array(
-                'result' => true,
-                'url' => $checkoutUrl
+                'message' => $exception->getMessage(),
             );
         }
 
@@ -115,7 +133,7 @@ class ControllerPaymentFrisbee extends Controller
                     $orderStatus = 8;
                 }
             } elseif ($frisbeeService->isOrderExpired()) {
-                if ($order_info['order_status'] == $orderStatusPending) {
+                if ($order_info['order_status_id'] == $orderStatusPending) {
                     $orderStatus = 14;
                 } else {
                     die();
@@ -195,7 +213,8 @@ class ControllerPaymentFrisbee extends Controller
             'cms_name' => 'Opencart',
             'cms_version' => defined('VERSION') ? VERSION : '',
             'shop_domain' => $_SERVER['SERVER_NAME'] ?: $_SERVER['HTTP_HOST'],
-            'path' => $_SERVER['REQUEST_URI']
+            'path' => $_SERVER['REQUEST_URI'],
+            'uuid' => isset($_SERVER['HTTP_USER_AGENT']) ? base64_encode($_SERVER['HTTP_USER_AGENT']) : time()
         );
         $reservationData['uuid'] = sprintf('%s_%s', $reservationData['shop_domain'], $reservationData['cms_name']);
 

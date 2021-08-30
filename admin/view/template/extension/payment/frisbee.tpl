@@ -59,13 +59,6 @@
                         </div>
                     </div>
 
-                    <div class="form-group ">
-                        <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="<?php echo $entry_help_lang; ?>"> <?php echo $entry_language; ?></span></label>
-                        <div class="col-sm-10">
-                            <input type="text" name="frisbee_language" value="<?php echo ($frisbee_language == "") ? "RU" : $frisbee_language; ?>"  class="form-control"/>
-                        </div>
-                    </div>
-
                     <div class="form-group">
                         <label class="col-sm-2 control-label" for="input-order-status"><?php echo $entry_order_status; ?></label>
                         <div class="col-sm-10">
