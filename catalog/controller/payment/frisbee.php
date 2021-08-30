@@ -12,6 +12,13 @@ class ControllerPaymentFrisbee extends Controller
 
     public function index()
     {
+        if (!empty($this->request->get['_'])) {
+            switch ($this->request->get['_']) {
+                case 'thankYou': return $this->thankYou();
+                case 'callback': return $this->callback();
+            }
+        }
+
         $this->language->load('payment/frisbee');
         $order_id = $this->session->data['order_id'];
         $this->load->model('checkout/order');
@@ -19,10 +26,10 @@ class ControllerPaymentFrisbee extends Controller
         $order_info = $this->model_checkout_order->getOrder($this->session->data['order_id']);
 
         if (version_compare(VERSION, '3.9.9.9', '>')) {
-            $backref = $this->url->link('extension/frisbee/payment/frisbee|success', '', 'SSL');
-            $callback = $this->url->link('extension/frisbee/payment/frisbee|callback', '', 'SSL');
+            $backref = $this->url->link('extension/frisbee/payment/frisbee&_=thankYou', '', 'SSL');
+            $callback = $this->url->link('extension/frisbee/payment/frisbee&_callback', '', 'SSL');
         } else {
-            $backref = $this->url->link('payment/frisbee/success', '', 'SSL');
+            $backref = $this->url->link('payment/frisbee/thank_you', '', 'SSL');
             $callback = $this->url->link('payment/frisbee/callback', '', 'SSL');
         }
 
@@ -119,7 +126,7 @@ class ControllerPaymentFrisbee extends Controller
             $frisbeeService->setMerchantId($this->getMerchantId());
             $frisbeeService->setSecretKey($this->getSecretKey());
 
-            $result = $frisbeeService->handleCallbackData($data);
+            $frisbeeService->handleCallbackData($data);
 
             $order_info = $this->model_checkout_order->getOrder($orderId);
 
@@ -157,12 +164,43 @@ class ControllerPaymentFrisbee extends Controller
         $this->modelCheckoutOrderUpdate($orderId, $orderStatus, $comment, $notify);
     }
 
+    public function thankYou()
+    {
+        $this->load->language('extension/frisbee/extension/payment/frisbee');
+
+        $this->document->setTitle($this->language->get('success_heading_title'));
+
+        $data['breadcrumbs'] = [];
+
+        $data['breadcrumbs'][] = [
+            'text' => $this->language->get('text_success'),
+            'href' => $this->url->link('checkout/success', 'language=' . $this->config->get('config_language'))
+        ];
+
+        if ($this->customer->isLogged()) {
+            $data['text_message'] = sprintf($this->language->get('text_customer'), $this->url->link('account/account', 'language=' . $this->config->get('config_language')), $this->url->link('account/order', 'language=' . $this->config->get('config_language')), $this->url->link('account/download', 'language=' . $this->config->get('config_language')), $this->url->link('information/contact', 'language=' . $this->config->get('config_language')));
+        } else {
+            $data['text_message'] = sprintf($this->language->get('text_guest'), $this->url->link('information/contact', 'language=' . $this->config->get('config_language')));
+        }
+
+        $data['continue'] = $this->url->link('common/home', 'language=' . $this->config->get('config_language'));
+
+        $data['column_left'] = $this->load->controller('common/column_left');
+        $data['column_right'] = $this->load->controller('common/column_right');
+        $data['content_top'] = $this->load->controller('common/content_top');
+        $data['content_bottom'] = $this->load->controller('common/content_bottom');
+        $data['footer'] = $this->load->controller('common/footer');
+        $data['header'] = $this->load->controller('common/header');
+
+        $this->response->setOutput($this->load->view('common/success', $data));
+    }
+
     protected function modelCheckoutOrderUpdate($orderId, $orderStatusId, $comment, $notify = false)
     {
         if (version_compare(VERSION, '2.0.0.0', '<')) {
             $this->model_checkout_order->update($orderId, $orderStatusId, $comment, $notify, false);
         } else {
-            $this->model_checkout_order->addOrderHistory($orderId, $orderStatusId, $comment, $notify, false);
+            $this->model_checkout_order->addHistory($orderId, $orderStatusId, $comment, $notify, false);
         }
     }
 

@@ -288,6 +288,7 @@ class FrisbeeService
                 return false;
             } else {
                 $this->isOrderApproved = true;
+                $this->setStatusMessage('Order was approved.');
             }
         }
 
