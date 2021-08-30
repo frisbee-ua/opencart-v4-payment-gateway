@@ -1,11 +1,10 @@
-# Frisbee payment gateway for Opencart 2.0+
+# Frisbee payment gateway for Opencart 4
 
 ## System requirements
 
 * PHP 5.6+
-* Opencart 2.0+
+* Opencart 4
 
 ## Installation
 
-Copy plugin files to the /upload/ directory.
-
+Install plugin through Extension Installer
